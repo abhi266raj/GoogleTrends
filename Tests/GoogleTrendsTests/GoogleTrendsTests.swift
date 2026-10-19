@@ -22,3 +22,28 @@ private struct TrendsFixtureTransport: TrendsTransport {
     #expect(topics.first?.article?.source == "Space Desk")
 }
 
+
+@Test func rejectsEmptyAndMalformedFeeds() async throws {
+    let empty = GoogleTrendsClient(transport: TrendsFixtureTransport([.success(Data("<rss/>".utf8))]))
+    await #expect(throws: GoogleTrendsError.self) { try await empty.trendingTopics() }
+    let malformed = GoogleTrendsClient(transport: TrendsFixtureTransport([.success(Data("<rss>".utf8))]))
+    await #expect(throws: GoogleTrendsError.self) { try await malformed.trendingTopics() }
+}
+
+@Test func surfacesHTTPFailureAndRejectsInvalidLimits() async throws {
+    let client = GoogleTrendsClient(transport: TrendsFixtureTransport([.failure(.httpStatus(429))]))
+    do {
+        _ = try await client.trendingTopics()
+        Issue.record("Expected HTTP error")
+    } catch GoogleTrendsError.httpStatus(let status) { #expect(status == 429) }
+    await #expect(throws: GoogleTrendsError.self) { try await client.trendingTopics(limit: 101) }
+}
+
+@Test func deduplicatesTopicsAndKeepsTopicsWithoutArticles() async throws {
+    let xml = Data("<rss><channel><item><title>Space launch</title></item><item><title>space launch</title></item><item><title>Cricket</title></item></channel></rss>".utf8)
+    let client = GoogleTrendsClient(transport: TrendsFixtureTransport([.success(xml)]))
+    let topics = try await client.trendingTopics(limit: 1)
+    #expect(topics.count == 1)
+    #expect(topics[0].hashtag == "#Spacelaunch")
+    #expect(topics[0].article == nil)
+}
