@@ -11,7 +11,11 @@ let package = Package(
         .library(name: "GoogleTrendsSource", targets: ["GoogleTrendsSource"])
     ],
     targets: [
-        .binaryTarget(name: "TrendingHashtag", path: ".build/distribution/TrendingHashtag.xcframework"),
+        .binaryTarget(
+            name: "TrendingHashtag",
+            url: "https://github.com/abhi266raj/TrendingHashtag/releases/download/artifacts-0.2.0/TrendingHashtag.xcframework.zip",
+            checksum: "43c2fdaedc2ef2024e5c21bf40c71e901dea2191d2016b427d7d4d76f77c803f"
+        ),
         .target(name: "TrendingHashtagSource", path: "Sources/TrendingHashtag"),
         .target(name: "GoogleTrends", dependencies: ["TrendingHashtagSource"], path: "Sources/GoogleTrends"),
         .target(name: "GoogleTrendsSource", dependencies: ["TrendingHashtagSource"], path: "Sources/GoogleTrendsSource"),
