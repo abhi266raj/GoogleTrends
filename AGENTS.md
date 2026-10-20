@@ -1,6 +1,6 @@
-# GoogleTrends contributor instructions
+# TrendingHashtag contributor instructions
 
-GoogleTrends is an independent Swift 6 package. Work only on package behavior,
+TrendingHashtag is an independent Swift 6 package. Work only on package behavior,
 tests, documentation, or distribution tooling. Do not add application-specific rules.
 
 - Keep public interfaces source compatible within the documented release range.

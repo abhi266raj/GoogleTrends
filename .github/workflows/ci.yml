@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: googletrends-${{ github.ref }}
+  group: trendinghashtag-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   build-and-test:
@@ -55,9 +55,9 @@ jobs:
         run: Scripts/verify-platforms.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: GoogleTrends-XCFramework
+          name: TrendingHashtag-XCFramework
           path: |
-            .build/distribution/GoogleTrends.xcframework.zip
+            .build/distribution/TrendingHashtag.xcframework.zip
             .build/distribution/checksum.txt
             .build/distribution/toolchain.txt
   release:
@@ -74,7 +74,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          name: GoogleTrends-XCFramework
+          name: TrendingHashtag-XCFramework
           path: .build/distribution
       - name: Publish verified package
         env:

@@ -7,7 +7,7 @@ allow force pushes or deletion or grant outsiders direct write access.
 
 ## Automatic release on a version increase
 
-`VERSION` is the release trigger. For this update it is **0.1.0**. Include an
+`VERSION` is the release trigger. For this update it is **0.2.0**. Include an
 increased stable `MAJOR.MINOR.PATCH` value in the feature PR when a release is
 wanted, and update README and CHANGELOG.
 Normal merges that leave VERSION unchanged run CI without publishing. Decreases,
@@ -16,7 +16,7 @@ leading zeroes, malformed versions, and prerelease suffixes fail validation.
 When the owner merges a version increase into main, CI automatically:
 
 1. Builds the three Mac/iPhone XCFramework destinations with library evolution and @rpath,
-   using the same sources as GoogleTrendsSource, and records toolchain/source SHA.
+   using the same sources as TrendingHashtagSource, and records toolchain/source SHA.
 2. Runs the deterministic source suite, isolated public consumer tests for both
    products, binary compilation across the shipped architectures, and platform consumer builds.
 3. Publishes the immutable binary asset in the prerelease `artifacts-VERSION`.
@@ -43,5 +43,3 @@ The main/feature manifest references the locally built XCFramework. Run
 the demo from a checkout. Published semantic tags instead reference the remote
 archive, so package consumers do not build or stage a framework themselves.
 See [distribution guidance](Distribution/README.md) for local verification.
-
-The initial release is 0.1.0; release tags and assets are immutable.

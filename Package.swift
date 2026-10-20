@@ -2,16 +2,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "GoogleTrends",
+    name: "TrendingHashtag",
     platforms: [.macOS(.v13), .iOS(.v16)],
     products: [
+        .library(name: "TrendingHashtag", targets: ["TrendingHashtag"]),
+        .library(name: "TrendingHashtagSource", targets: ["TrendingHashtagSource"]),
         .library(name: "GoogleTrends", targets: ["GoogleTrends"]),
         .library(name: "GoogleTrendsSource", targets: ["GoogleTrendsSource"])
     ],
     targets: [
-        .binaryTarget(name: "GoogleTrends", path: ".build/distribution/GoogleTrends.xcframework"),
-        .target(name: "GoogleTrendsSource", path: "Sources/GoogleTrends"),
-        .testTarget(name: "GoogleTrendsTests", dependencies: ["GoogleTrendsSource"])
+        .binaryTarget(name: "TrendingHashtag", path: ".build/distribution/TrendingHashtag.xcframework"),
+        .target(name: "TrendingHashtagSource", path: "Sources/TrendingHashtag"),
+        .target(name: "GoogleTrends", dependencies: ["TrendingHashtagSource"], path: "Sources/GoogleTrends"),
+        .target(name: "GoogleTrendsSource", dependencies: ["TrendingHashtagSource"], path: "Sources/GoogleTrendsSource"),
+        .testTarget(name: "TrendingHashtagTests", dependencies: ["TrendingHashtagSource", "GoogleTrends", "GoogleTrendsSource"])
     ],
     swiftLanguageModes: [.v6]
 )

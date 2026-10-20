@@ -1,6 +1,6 @@
 # Contributing
 
-The public repository is https://github.com/abhi266raj/GoogleTrends.
+The public repository is https://github.com/abhi266raj/TrendingHashtag.
 The default branch, `main`, is locked against updates, force pushes, and deletion.
 No public contributor has write access. Forks and proposed pull requests do not
 change this repository. The owner controls whether an update is accepted.
@@ -10,18 +10,18 @@ pull request with a concrete problem, focused change, and validation evidence.
 Do not include credentials, private feed data, build output, or personal data.
 
 ```sh
-git clone https://github.com/abhi266raj/GoogleTrends.git
-cd GoogleTrends
+git clone https://github.com/abhi266raj/TrendingHashtag.git
+cd TrendingHashtag
 Scripts/build-xcframework.sh
 swift build
 swift test
 Scripts/verify-products.sh
 ```
 
-The root test suite imports GoogleTrendsSource. The consumer check tests both public
+The root test suite imports TrendingHashtagSource and GoogleTrendsSource. The consumer check tests public
 products separately. Changes to library code require a new versioned XCFramework;
 see [distribution guidance](Distribution/README.md) and [RELEASING.md](RELEASING.md).
 
 Tests use deterministic injected transports; no live network in unit tests. Run Scripts/verify-platforms.sh when changing public API.
 
-GoogleTrends owns generic feed discovery and parsing. Applications own UI, caching, factual validation and retry policy. Use protocols, Sendable values and async/await; inject transports. New behavior needs focused contract tests.
+TrendingHashtag owns generic feed discovery and parsing. Applications own UI, caching, factual validation and retry policy. Use protocols, Sendable values and async/await; inject transports. New behavior needs focused contract tests.

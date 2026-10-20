@@ -8,15 +8,15 @@ identity="$(basename "$root" | tr '[:upper:]' '[:lower:]')"
 dependency=".package(path: \"$root\")"
 if [ -n "$version" ]; then
     swift Scripts/Release.swift compare "$version" 0.0.0 > /dev/null
-    dependency=".package(url: \"https://github.com/abhi266raj/GoogleTrends.git\", exact: \"$version\")"
-    identity=googletrends
+    dependency=".package(url: \"https://github.com/abhi266raj/TrendingHashtag.git\", exact: \"$version\")"
+    identity=trendinghashtag
 fi
-for product in GoogleTrends GoogleTrendsSource; do
-    consumer="$(mktemp -d "${TMPDIR:-/tmp}/googletrends-consumer.XXXXXX")"
+for product in TrendingHashtag TrendingHashtagSource GoogleTrendsSource; do
+    consumer="$(mktemp -d "${TMPDIR:-/tmp}/trendinghashtag-consumer.XXXXXX")"
     trap 'rm -rf "$consumer"' EXIT
     mkdir -p "$consumer/Tests/ConsumerTests"
-    for file in "$root"/Tests/GoogleTrendsTests/*.swift; do
-        sed "s/import GoogleTrendsSource/import $product/" "$file" > "$consumer/Tests/ConsumerTests/$(basename "$file")"
+    for file in "$root"/Tests/TrendingHashtagTests/*.swift; do
+        sed -e "s/import TrendingHashtagSource/import $product/" -e "s/import GoogleTrendsSource/import $product/" "$file" > "$consumer/Tests/ConsumerTests/$(basename "$file")"
     done
     cat > "$consumer/Package.swift" <<SWIFT
 // swift-tools-version: 6.0

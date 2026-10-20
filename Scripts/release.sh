@@ -5,8 +5,8 @@ cd "$(dirname "$0")/.."
 version="$(cat VERSION)"
 source_commit="$(git rev-parse HEAD)"
 artifact_tag="artifacts-$version"
-repo="abhi266raj/GoogleTrends"
-archive=".build/distribution/GoogleTrends.xcframework.zip"
+repo="abhi266raj/TrendingHashtag"
+archive=".build/distribution/TrendingHashtag.xcframework.zip"
 checksum="$(cat .build/distribution/checksum.txt)"
 test "$(swift package compute-checksum "$archive")" = "$checksum"
 test -z "$(git status --porcelain)"
@@ -14,7 +14,7 @@ existing_tag="$(git rev-parse --verify "refs/tags/$version^{commit}" 2>/dev/null
 notes="$(mktemp)"
 trap 'rm -f "$notes"' EXIT
 cat > "$notes" <<TEXT
-GoogleTrends $version XCFramework artifact.
+TrendingHashtag $version XCFramework artifact.
 
 Corresponding source commit: $source_commit (merged main).
 SHA-256: $checksum
@@ -29,17 +29,17 @@ cat .build/distribution/toolchain.txt >> "$notes"
 if gh release view "$artifact_tag" --repo "$repo" > /dev/null 2>&1; then
     # Retry with the original bytes only for the same merged source commit.
     previous="$(mktemp -d)"
-    gh release download "$artifact_tag" --repo "$repo" --pattern GoogleTrends.xcframework.zip \
+    gh release download "$artifact_tag" --repo "$repo" --pattern TrendingHashtag.xcframework.zip \
         --pattern checksum.txt --pattern toolchain.txt --dir "$previous"
     test "$(tail -1 "$previous/toolchain.txt")" = "$source_commit"
     checksum="$(cat "$previous/checksum.txt")"
-    test "$(swift package compute-checksum "$previous/GoogleTrends.xcframework.zip")" = "$checksum"
-    cp "$previous/GoogleTrends.xcframework.zip" "$previous/checksum.txt" "$previous/toolchain.txt" .build/distribution/
+    test "$(swift package compute-checksum "$previous/TrendingHashtag.xcframework.zip")" = "$checksum"
+    cp "$previous/TrendingHashtag.xcframework.zip" "$previous/checksum.txt" "$previous/toolchain.txt" .build/distribution/
     rm -rf "$previous"
 else
     gh release create "$artifact_tag" "$archive" .build/distribution/checksum.txt \
         .build/distribution/toolchain.txt --repo "$repo" --target "$source_commit" \
-        --prerelease --title "GoogleTrends $version binary artifact" --notes-file "$notes"
+        --prerelease --title "TrendingHashtag $version binary artifact" --notes-file "$notes"
 fi
 # Only the generated tag commit changes; never push a commit to main.
 swift Scripts/Release.swift manifest "$version" "$checksum" Package.swift
@@ -52,7 +52,7 @@ else
     git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
         -c commit.gpgsign=false commit -m "Release $version package manifest (source $source_commit)"
     git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-        -c tag.gpgsign=false tag -a "$version" -m "GoogleTrends $version"
+        -c tag.gpgsign=false tag -a "$version" -m "TrendingHashtag $version"
     git push origin "refs/tags/$version"
 fi
 Scripts/verify-products.sh "$version"
@@ -61,10 +61,10 @@ if gh release view "$version" --repo "$repo" > /dev/null 2>&1; then
     exit 0
 fi
 cat > "$notes" <<TEXT
-GoogleTrends $version offers two SwiftPM products from the same package URL:
+TrendingHashtag $version offers two SwiftPM products from the same package URL:
 
-- **GoogleTrends**: recommended precompiled dynamic XCFramework, import GoogleTrends.
-- **GoogleTrendsSource**: same implementation built from source, import GoogleTrendsSource.
+- **TrendingHashtag**: recommended precompiled dynamic XCFramework, import TrendingHashtag.
+- **TrendingHashtagSource**: same implementation built from source, import TrendingHashtagSource.
 
 Binary artifacts: https://github.com/$repo/releases/tag/$artifact_tag
 Corresponding merged main source: $source_commit
@@ -79,4 +79,4 @@ The tag includes a generated manifest commit whose parent is the merged source;
 the protected main branch is not modified by the release workflow.
 TEXT
 gh release create "$version" --repo "$repo" --verify-tag --latest \
-    --title "GoogleTrends $version" --notes-file "$notes"
+    --title "TrendingHashtag $version" --notes-file "$notes"

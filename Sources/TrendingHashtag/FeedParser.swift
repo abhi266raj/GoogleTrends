@@ -1,32 +1,53 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 import Foundation
 #if canImport(FoundationXML)
 import FoundationXML
 #endif
 
-struct FeedItem {
+struct FeedItem: Sendable {
     var title = ""
+    var description = ""
     var link = ""
     var source = ""
     var date = ""
+    var approxTraffic = ""
     var relatedTitle = ""
     var relatedLink = ""
     var relatedSource = ""
+    var relatedSnippet = ""
 
-    var article: TrendArticle? { makeArticle(title: title, link: link, source: source) }
-    var relatedArticle: TrendArticle? { makeArticle(title: relatedTitle, link: relatedLink, source: relatedSource) }
+    var publishedAt: Date? {
+        FeedParser.parseDate(date)
+    }
 
-    private func makeArticle(title: String, link: String, source: String) -> TrendArticle? {
+    var article: TrendArticle? {
+        makeArticle(title: title, link: link, source: source, snippet: description)
+    }
+
+    var relatedArticle: TrendArticle? {
+        makeArticle(
+            title: relatedTitle,
+            link: relatedLink,
+            source: relatedSource,
+            snippet: !relatedSnippet.isEmpty ? relatedSnippet : (!description.isEmpty ? description : nil)
+        )
+    }
+
+    private func makeArticle(title: String, link: String, source: String, snippet: String?) -> TrendArticle? {
         guard !title.isEmpty, let url = URL(string: link),
               ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host != nil else { return nil }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
-        return TrendArticle(title: title, url: url, source: source.isEmpty ? (url.host ?? "") : source, publishedAt: formatter.date(from: date))
+        return TrendArticle(
+            title: title,
+            url: url,
+            source: source.isEmpty ? (url.host ?? "") : source,
+            publishedAt: publishedAt,
+            snippet: snippet
+        )
     }
 }
 
 /// Each parse owns its delegate. External entities are never resolved.
-final class FeedParser: NSObject, XMLParserDelegate {
+final class FeedParser: NSObject, XMLParserDelegate, @unchecked Sendable {
     private var items: [FeedItem] = []
     private var current: FeedItem?
     private var path: [String] = []
@@ -34,13 +55,40 @@ final class FeedParser: NSObject, XMLParserDelegate {
     private var relatedDepth = 0
     private var capturedRelated = false
 
+    private static let formatters: [DateFormatter] = {
+        let posix = Locale(identifier: "en_US_POSIX")
+        let formats = [
+            "EEE, dd MMM yyyy HH:mm:ss Z",
+            "EEE, dd MMM yyyy HH:mm:ss zzz",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        ]
+        return formats.map { fmt in
+            let df = DateFormatter()
+            df.locale = posix
+            df.dateFormat = fmt
+            return df
+        }
+    }()
+
+    static func parseDate(_ string: String) -> Date? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        for formatter in formatters {
+            if let date = formatter.date(from: trimmed) {
+                return date
+            }
+        }
+        return nil
+    }
+
     static func parse(_ data: Data) throws -> [FeedItem] {
         let delegate = FeedParser()
         let parser = XMLParser(data: data)
         parser.shouldResolveExternalEntities = false
         parser.delegate = delegate
         guard parser.parse() else {
-            throw GoogleTrendsError.malformedFeed(parser.parserError?.localizedDescription ?? "Invalid XML.")
+            throw TrendingHashtagError.malformedFeed(parser.parserError?.localizedDescription ?? "Invalid XML.")
         }
         return delegate.items
     }
@@ -63,6 +111,7 @@ final class FeedParser: NSObject, XMLParserDelegate {
             if relatedDepth > 0 && !capturedRelated {
                 switch name {
                 case "news_item_title": current?.relatedTitle = value
+                case "news_item_snippet": current?.relatedSnippet = value
                 case "news_item_url": current?.relatedLink = value
                 case "news_item_source": current?.relatedSource = value
                 default: break
@@ -70,9 +119,11 @@ final class FeedParser: NSObject, XMLParserDelegate {
             } else if path.dropLast().last == "item" {
                 switch name {
                 case "title": current?.title = value
+                case "description": current?.description = value
                 case "link": current?.link = value
                 case "source": current?.source = value
                 case "pubDate": current?.date = value
+                case "approx_traffic": current?.approxTraffic = value
                 default: break
                 }
             }
