@@ -37,7 +37,7 @@ jobs:
           release=false
           if [ "$EVENT" = push ] && [ "$increased" = true ]; then release=true; fi
           echo "release=$release" >> "$GITHUB_OUTPUT"
-        - name: Test release decisions and manifest generation
+      - name: Test release decisions and manifest generation
         run: Scripts/test-release.sh
       - name: Record toolchain
         run: |
