@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 root="$PWD"
-consumer="$(mktemp -d "${TMPDIR:-/tmp}/googletrends-platforms.XXXXXX")"
+consumer="$(mktemp -d "${TMPDIR:-/tmp}/trendinghashtag-platforms.XXXXXX")"
 trap 'rm -rf "$consumer"' EXIT
 identity="$(basename "$root" | tr '[:upper:]' '[:lower:]')"
 mkdir -p "$consumer/Sources/Consumer"
@@ -14,13 +14,13 @@ let package = Package(
     name: "PlatformConsumer", platforms: [.macOS(.v13), .iOS(.v16)],
     products: [.library(name: "PlatformConsumer", targets: ["Consumer"])],
     dependencies: [.package(path: "$root")],
-    targets: [.target(name: "Consumer", dependencies: [.product(name: "GoogleTrends", package: "$identity")])],
+    targets: [.target(name: "Consumer", dependencies: [.product(name: "TrendingHashtag", package: "$identity")])],
     swiftLanguageModes: [.v6]
 )
 SWIFT
 cat > "$consumer/Sources/Consumer/Consumer.swift" <<'SWIFT'
-import GoogleTrends
-public func check() async throws -> [TrendingTopic] { try await GoogleTrendsClient().trendingTopics(limit: 1) }
+import TrendingHashtag
+public func check() async throws -> [TrendingHashtag] { try await TrendingHashtagClient().trendingHashtags(limit: 1) }
 SWIFT
 platforms="$(swift Scripts/ArtifactPlatforms.swift)"
 while read -r sdk triple; do

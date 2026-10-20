@@ -30,15 +30,15 @@ func run(_ arguments: [String]) throws {
             throw Failure.message("Invalid archive SHA-256")
         }
         let original = try String(contentsOfFile: file, encoding: .utf8)
-        let expression = try NSRegularExpression(pattern: #"\.binaryTarget\(\s*name: "GoogleTrends",\s*path: "\.build/distribution/GoogleTrends\.xcframework"\s*\)"#)
+        let expression = try NSRegularExpression(pattern: #"\.binaryTarget\(\s*name: "TrendingHashtag",\s*path: "\.build/distribution/TrendingHashtag\.xcframework"\s*\)"#)
         let range = NSRange(original.startIndex..., in: original)
         guard expression.numberOfMatches(in: original, range: range) == 1 else {
             throw Failure.message("Expected exactly one development binary target")
         }
         let replacement = """
         .binaryTarget(
-                    name: "GoogleTrends",
-                    url: "https://github.com/abhi266raj/GoogleTrends/releases/download/artifacts-\(version)/GoogleTrends.xcframework.zip",
+                    name: "TrendingHashtag",
+                    url: "https://github.com/abhi266raj/TrendingHashtag/releases/download/artifacts-\(version)/TrendingHashtag.xcframework.zip",
                     checksum: "\(checksum)"
                 )
         """

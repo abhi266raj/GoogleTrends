@@ -16,7 +16,7 @@ trap 'rm -f "$manifest"' EXIT
 cp Package.swift "$manifest"
 checksum=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 swift Scripts/Release.swift manifest 0.1.0 "$checksum" "$manifest"
-/usr/bin/grep -Fq "releases/download/artifacts-0.1.0/GoogleTrends.xcframework.zip" "$manifest"
+/usr/bin/grep -Fq "releases/download/artifacts-0.1.0/TrendingHashtag.xcframework.zip" "$manifest"
 /usr/bin/grep -Fq "checksum: \"$checksum\"" "$manifest"
 if swift Scripts/Release.swift manifest 0.1.0 invalid "$manifest" > /dev/null 2>&1; then exit 1; fi
 printf 'Release version and manifest checks passed.\n'
