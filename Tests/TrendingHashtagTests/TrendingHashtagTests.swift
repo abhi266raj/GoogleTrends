@@ -237,9 +237,9 @@ private actor CustomHandlerTransport: TrendsTransport {
     // 2. Custom platform provider configuration
     let customProvider = CustomPlatformProvider(platform: .custom) { config, limit, transport in
         return [
-            TrendingHashtag(
-                hashtag: "#CustomTag",
+            TrendingTopic(
                 topic: "Custom Topic",
+                hashtag: "#CustomTag",
                 title: "Custom Title",
                 shortDescription: "Custom Description",
                 platform: .custom

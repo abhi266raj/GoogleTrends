@@ -91,9 +91,9 @@ public struct WikipediaTagDetailProvider: TagDetailSearching {
 
 /// Extracts tag detail from existing hashtag/article data.
 public struct FeedTagDetailProvider: TagDetailSearching {
-    private let fallbackTopics: @Sendable () async throws -> [TrendingHashtag]
+    private let fallbackTopics: @Sendable () async throws -> [TrendingTopic]
 
-    public init(fallbackTopics: @escaping @Sendable () async throws -> [TrendingHashtag]) {
+    public init(fallbackTopics: @escaping @Sendable () async throws -> [TrendingTopic]) {
         self.fallbackTopics = fallbackTopics
     }
 

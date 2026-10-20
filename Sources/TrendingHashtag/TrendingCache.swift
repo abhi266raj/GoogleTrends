@@ -3,7 +3,7 @@ import Foundation
 
 public actor TrendingCache {
     private struct CacheEntry: Sendable {
-        let hashtags: [TrendingHashtag]
+        let topics: [TrendingTopic]
         let cachedAt: Date
     }
 
@@ -11,17 +11,17 @@ public actor TrendingCache {
 
     public init() {}
 
-    public func get(key: String, validFor duration: TimeInterval, now: Date = Date()) -> [TrendingHashtag]? {
+    public func get(key: String, validFor duration: TimeInterval, now: Date = Date()) -> [TrendingTopic]? {
         guard duration > 0, let entry = storage[key] else { return nil }
         if now.timeIntervalSince(entry.cachedAt) <= duration {
-            return entry.hashtags
+            return entry.topics
         }
         storage.removeValue(forKey: key)
         return nil
     }
 
-    public func set(key: String, hashtags: [TrendingHashtag], now: Date = Date()) {
-        storage[key] = CacheEntry(hashtags: hashtags, cachedAt: now)
+    public func set(key: String, topics: [TrendingTopic], now: Date = Date()) {
+        storage[key] = CacheEntry(topics: topics, cachedAt: now)
     }
 
     public func remove(key: String) {

@@ -72,23 +72,10 @@ public struct TrendArticle: Equatable, Sendable {
     }
 }
 
-public struct TrendingTopic: Equatable, Sendable {
-    public let topic: String
-    public let article: TrendArticle?
-    public var hashtag: String {
-        "#" + topic.components(separatedBy: CharacterSet.alphanumerics.inverted).joined()
-    }
-
-    public init(topic: String, article: TrendArticle? = nil) {
-        self.topic = topic
-        self.article = article
-    }
-}
-
-public struct TrendingHashtag: Equatable, Sendable, Identifiable {
+public struct TrendingTopic: Equatable, Sendable, Identifiable {
     public var id: String { hashtag }
-    public let hashtag: String
     public let topic: String
+    public let hashtag: String
     public let title: String?
     public let shortDescription: String?
     public let article: TrendArticle?
@@ -97,20 +84,20 @@ public struct TrendingHashtag: Equatable, Sendable, Identifiable {
     public let publishedAt: Date?
 
     public init(
-        hashtag: String? = nil,
         topic: String,
+        article: TrendArticle? = nil,
+        hashtag: String? = nil,
         title: String? = nil,
         shortDescription: String? = nil,
-        article: TrendArticle? = nil,
         language: TrendingLanguage = .english,
         platform: TrendingPlatform = .googleTrends,
         publishedAt: Date? = nil
     ) {
         self.topic = topic
+        self.article = article
         self.hashtag = hashtag ?? ("#" + topic.components(separatedBy: CharacterSet.alphanumerics.inverted).joined())
         self.title = title ?? article?.title
         self.shortDescription = shortDescription ?? article?.snippet
-        self.article = article
         self.language = language
         self.platform = platform
         self.publishedAt = publishedAt ?? article?.publishedAt

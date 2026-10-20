@@ -7,7 +7,7 @@ public protocol TrendingPlatformProvider: Sendable {
         configuration: TrendingConfiguration,
         limit: Int,
         transport: any TrendsTransport
-    ) async throws -> [TrendingHashtag]
+    ) async throws -> [TrendingTopic]
 }
 
 /// Default platform provider using Google Trends RSS feed.
@@ -25,7 +25,7 @@ public struct GoogleTrendsPlatformProvider: TrendingPlatformProvider {
         configuration: TrendingConfiguration,
         limit: Int,
         transport: any TrendsTransport
-    ) async throws -> [TrendingHashtag] {
+    ) async throws -> [TrendingTopic] {
         let effectiveRegion = region.isEmpty ? configuration.region : region
         var queryItems = [URLQueryItem(name: "geo", value: effectiveRegion)]
         if !language.isEmpty {
@@ -65,28 +65,28 @@ public struct GoogleTrendsPlatformProvider: TrendingPlatformProvider {
             )
         }
 
-        // 3. Deduplicate and construct hashtags
+        // 3. Deduplicate and construct topics
         var seen: Set<String> = []
-        let hashtags = filteredByLanguage.compactMap { item -> TrendingHashtag? in
+        let topics = filteredByLanguage.compactMap { item -> TrendingTopic? in
             let lang = LanguageFilter.detectLanguage(text: item.title)
-            let hashtag = TrendingHashtag(
+            let topic = TrendingTopic(
                 topic: item.title,
+                article: item.relatedArticle,
                 title: item.relatedArticle?.title,
                 shortDescription: item.relatedArticle?.snippet ?? (!item.description.isEmpty ? item.description : nil),
-                article: item.relatedArticle,
                 language: lang,
                 platform: .googleTrends,
                 publishedAt: item.publishedAt
             )
-            guard hashtag.hashtag.count > 1, seen.insert(hashtag.hashtag.lowercased()).inserted else { return nil }
-            return hashtag
+            guard topic.hashtag.count > 1, seen.insert(topic.hashtag.lowercased()).inserted else { return nil }
+            return topic
         }
 
-        guard !hashtags.isEmpty else {
+        guard !topics.isEmpty else {
             throw TrendingHashtagError.noResults(["Google Trends: no topics matching configuration."])
         }
 
-        return Array(hashtags.prefix(limit))
+        return Array(topics.prefix(limit))
     }
 }
 
@@ -103,7 +103,7 @@ public struct TwitterTrendsProvider: TrendingPlatformProvider {
         configuration: TrendingConfiguration,
         limit: Int,
         transport: any TrendsTransport
-    ) async throws -> [TrendingHashtag] {
+    ) async throws -> [TrendingTopic] {
         guard let url = endpoint else {
             throw TrendingHashtagError.invalidInput("Twitter / X provider requires a configured endpoint URL.")
         }
@@ -125,7 +125,7 @@ public struct InstagramTrendsProvider: TrendingPlatformProvider {
         configuration: TrendingConfiguration,
         limit: Int,
         transport: any TrendsTransport
-    ) async throws -> [TrendingHashtag] {
+    ) async throws -> [TrendingTopic] {
         guard let url = endpoint else {
             throw TrendingHashtagError.invalidInput("Instagram provider requires a configured endpoint URL.")
         }
@@ -149,38 +149,38 @@ public struct YouTubeTrendsProvider: TrendingPlatformProvider {
         configuration: TrendingConfiguration,
         limit: Int,
         transport: any TrendsTransport
-    ) async throws -> [TrendingHashtag] {
+    ) async throws -> [TrendingTopic] {
         let url = endpoint ?? URL(string: "https://www.youtube.com/feeds/videos.xml?chart=mostpopular&region=\(region)")!
         let data = try await transport.data(from: url)
         let items = (try? FeedParser.parse(data)) ?? []
-        let hashtags = items.compactMap { item -> TrendingHashtag? in
+        let topics = items.compactMap { item -> TrendingTopic? in
             let lang = LanguageFilter.detectLanguage(text: item.title)
             guard LanguageFilter.isAllowed(topic: item.title, allowed: configuration.languages) else { return nil }
-            return TrendingHashtag(
+            return TrendingTopic(
                 topic: item.title,
+                article: item.relatedArticle,
                 title: item.relatedArticle?.title,
                 shortDescription: item.relatedArticle?.snippet ?? item.description,
-                article: item.relatedArticle,
                 language: lang,
                 platform: .youtube,
                 publishedAt: item.publishedAt
             )
         }
-        guard !hashtags.isEmpty else {
+        guard !topics.isEmpty else {
             throw TrendingHashtagError.noResults(["YouTube: no trending topics matching configuration."])
         }
-        return Array(hashtags.prefix(limit))
+        return Array(topics.prefix(limit))
     }
 }
 
 /// Custom platform provider wrapper.
 public struct CustomPlatformProvider: TrendingPlatformProvider {
     public let platform: TrendingPlatform
-    private let fetcher: @Sendable (TrendingConfiguration, Int, any TrendsTransport) async throws -> [TrendingHashtag]
+    private let fetcher: @Sendable (TrendingConfiguration, Int, any TrendsTransport) async throws -> [TrendingTopic]
 
     public init(
         platform: TrendingPlatform = .custom,
-        fetcher: @escaping @Sendable (TrendingConfiguration, Int, any TrendsTransport) async throws -> [TrendingHashtag]
+        fetcher: @escaping @Sendable (TrendingConfiguration, Int, any TrendsTransport) async throws -> [TrendingTopic]
     ) {
         self.platform = platform
         self.fetcher = fetcher
@@ -190,7 +190,7 @@ public struct CustomPlatformProvider: TrendingPlatformProvider {
         configuration: TrendingConfiguration,
         limit: Int,
         transport: any TrendsTransport
-    ) async throws -> [TrendingHashtag] {
+    ) async throws -> [TrendingTopic] {
         try await fetcher(configuration, limit, transport)
     }
 }
@@ -200,7 +200,7 @@ private func parsePlatformJSON(
     platform: TrendingPlatform,
     configuration: TrendingConfiguration,
     limit: Int
-) throws -> [TrendingHashtag] {
+) throws -> [TrendingTopic] {
     struct TagItem: Decodable {
         let tag: String?
         let name: String?
@@ -217,14 +217,14 @@ private func parsePlatformJSON(
     let payload = try decoder.decode(JSONPayload.self, from: data)
     let rawItems = payload.hashtags ?? payload.trends ?? payload.items ?? []
 
-    let hashtags = rawItems.compactMap { item -> TrendingHashtag? in
-        let topic = item.name ?? item.tag ?? item.title ?? ""
-        guard !topic.isEmpty else { return nil }
-        let lang = LanguageFilter.detectLanguage(text: topic)
-        guard LanguageFilter.isAllowed(topic: topic, articleTitle: item.description, allowed: configuration.languages) else { return nil }
-        return TrendingHashtag(
+    let topics = rawItems.compactMap { item -> TrendingTopic? in
+        let topicName = item.name ?? item.tag ?? item.title ?? ""
+        guard !topicName.isEmpty else { return nil }
+        let lang = LanguageFilter.detectLanguage(text: topicName)
+        guard LanguageFilter.isAllowed(topic: topicName, articleTitle: item.description, allowed: configuration.languages) else { return nil }
+        return TrendingTopic(
+            topic: topicName,
             hashtag: item.tag,
-            topic: topic,
             title: item.title,
             shortDescription: item.description,
             language: lang,
@@ -232,8 +232,8 @@ private func parsePlatformJSON(
         )
     }
 
-    guard !hashtags.isEmpty else {
+    guard !topics.isEmpty else {
         throw TrendingHashtagError.noResults(["\(platform.displayName): no topics returned."])
     }
-    return Array(hashtags.prefix(limit))
+    return Array(topics.prefix(limit))
 }

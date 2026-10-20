@@ -20,7 +20,7 @@ let package = Package(
 SWIFT
 cat > "$consumer/Sources/Consumer/Consumer.swift" <<'SWIFT'
 import TrendingHashtag
-public func check() async throws -> [TrendingHashtag] { try await TrendingHashtagClient().trendingHashtags(limit: 1) }
+public func check() async throws -> [TrendingTopic] { try await TrendingHashtagClient().trendingHashtags(limit: 1) }
 SWIFT
 platforms="$(swift Scripts/ArtifactPlatforms.swift)"
 while read -r sdk triple; do

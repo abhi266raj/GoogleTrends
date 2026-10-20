@@ -25,7 +25,7 @@ public struct GoogleTrendsClient: TrendsSearching {
     }
 
     /// Trending hashtags with full details.
-    public func trendingHashtags(limit: Int = 15) async throws -> [TrendingHashtag] {
+    public func trendingHashtags(limit: Int = 15) async throws -> [TrendingTopic] {
         try await client.trendingHashtags(limit: limit)
     }
 

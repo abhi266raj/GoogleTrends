@@ -31,7 +31,7 @@ public protocol TrendsSearching: Sendable {
 }
 
 public protocol TrendingHashtagsSearching: TrendsSearching {
-    func trendingHashtags(limit: Int) async throws -> [TrendingHashtag]
+    func trendingHashtags(limit: Int) async throws -> [TrendingTopic]
     func tagDetail(for tagOrTopic: String) async throws -> TrendingHashtagDetail
 }
 
@@ -96,11 +96,11 @@ public struct TrendingHashtagClient: TrendingHashtagsSearching {
         self.customDetailProvider = detailProvider
     }
 
-    public func trendingHashtags(limit: Int = 15) async throws -> [TrendingHashtag] {
+    public func trendingHashtags(limit: Int = 15) async throws -> [TrendingTopic] {
         try await trendingHashtags(limit: limit, forceRefresh: false)
     }
 
-    public func trendingHashtags(limit: Int = 15, forceRefresh: Bool = false) async throws -> [TrendingHashtag] {
+    public func trendingHashtags(limit: Int = 15, forceRefresh: Bool = false) async throws -> [TrendingTopic] {
         try validate(limit: limit)
 
         let cacheKey = "\(platformProvider.platform.rawValue):\(configuration.region):\(configuration.timeWindowHours ?? 0):\(configuration.languages.map(\.rawValue).sorted().joined(separator: ","))"
@@ -113,23 +113,22 @@ public struct TrendingHashtagClient: TrendingHashtagsSearching {
             }
         }
 
-        let hashtags = try await platformProvider.trendingHashtags(
+        let topics = try await platformProvider.trendingHashtags(
             configuration: configuration,
             limit: limit,
             transport: transport
         )
 
-        guard !hashtags.isEmpty else {
+        guard !topics.isEmpty else {
             throw TrendingHashtagError.noResults(["\(platformProvider.platform.displayName): no topics matching configuration."])
         }
 
-        await cache.set(key: cacheKey, hashtags: hashtags)
-        return Array(hashtags.prefix(limit))
+        await cache.set(key: cacheKey, topics: topics)
+        return Array(topics.prefix(limit))
     }
 
     public func trendingTopics(limit: Int = 15) async throws -> [TrendingTopic] {
-        let hashtags = try await trendingHashtags(limit: limit)
-        return hashtags.map { TrendingTopic(topic: $0.topic, article: $0.article) }
+        try await trendingHashtags(limit: limit)
     }
 
     public func tagDetail(for tagOrTopic: String) async throws -> TrendingHashtagDetail {
